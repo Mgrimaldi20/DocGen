@@ -1,6 +1,12 @@
 # DocGen
 Generates HTML documentation for C code based upon a type of comment format above a function definition or declaration
 
+## Running The Script
+This is a python script that is simple to run, simply use it as follows:
+```
+python docgen.py /path/to/code
+```
+
 ## The Comment String
 The comment to put above functions looks something like this, there are some optional fields:
 ```
