@@ -120,38 +120,52 @@ def parse_comment(comment_block):
     return doc
 
 def generate_html(docs):
-    html = '''<!DOCTYPE html>
+    # Generate the sidebar index
+    sidebar = '''<div class="sidebar">
+    <h2>Navigation</h2>
+    <ul>
+'''
+
+    content = '''<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Function Documentation</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        h1 { text-align: center; }
+        body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; background: #f4f4f4; }
+        .sidebar { width: 300px; padding: 20px; background: #f4f4f4; border-right: 1px solid #ccc; overflow-y: auto; height: 100%; }
+        .bar2 { padding: 20px; background: #f4f4f4; height: 100%; width: 90% }
+        .content { flex-grow: 1; padding: 20px; overflow-y: auto; }
         .function { margin-bottom: 50px; }
         .signature { font-family: monospace; background-color: #f0f0f0; padding: 10px; border-left: 4px solid #ccc; white-space: pre; }
         h2 { color: #2c3e50; }
         h3 { color: #34495e; }
         ul { list-style-type: disc; margin-left: 20px; }
         p { text-align: justify; }
+        .function-name { margin: 0; padding: 0; font-size: 1.2em; }
     </style>
 </head>
 <body>
-    <h1>Function Documentation</h1>
+    <div class="bar2">
+        <h2>Function Documentation</h2>
+        <ul>
 '''
+
     for doc in docs:
-        html += f'''
-    <div class="function">
-        <h2>{doc.get('function', 'Unnamed Function')}</h2>
+        func_id = doc.get('function', 'Unnamed Function').replace(' ', '-').lower()
+        sidebar += f'            <li><a href="#{func_id}">{doc.get('function', 'Unnamed Function')}</a></li>\n'
+        content += f'''
+    <div class="function" id="{func_id}">
+        <h2 class="function-name">{doc.get('function', 'Unnamed Function')}</h2>
         <pre class="signature">{doc.get('signature', 'Signature not found')}</pre>
 '''
         if doc['description']:
-            html += f'''
+            content += f'''
         <h3>Description:</h3>
         <p>{doc['description']}</p>
 '''
         if doc['params']:
-            html += '''
+            content += '''
         <h3>Parameters:</h3>
         <ul>
 '''
@@ -160,21 +174,20 @@ def generate_html(docs):
                 if len(param_parts) == 2:
                     param_name = param_parts[0].strip()
                     param_desc = param_parts[1].strip()
-                    html += f'            <li><strong>{param_name}:</strong> {param_desc}</li>\n'
+                    content += f'            <li><strong>{param_name}:</strong> {param_desc}</li>\n'
                 else:
-                    html += f'            <li>{param.strip()}</li>\n'
-            html += '        </ul>\n'
+                    content += f'            <li>{param.strip()}</li>\n'
+            content += '        </ul>\n'
         if doc['returns']:
-            html += f'''
+            content += f'''
         <h3>Returns:</h3>
         <p>{doc['returns']}</p>
 '''
-        html += '    </div>\n'
-    html += '''
-</body>
-</html>
-'''
-    return html
+        content += '    </div>\n'
+    sidebar += '        </ul>\n    </div>\n'
+    content += '    </div>\n</body>\n</html>'
+
+    return sidebar + content
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as file:
@@ -239,3 +252,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
