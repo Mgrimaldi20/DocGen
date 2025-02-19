@@ -1,38 +1,40 @@
 import os
 import re
 import sys
+import multiprocessing
 
-def extract_comments(file_content):
-    # Pattern to match the comment block
+def extract_comments_and_signature(content):
+    # Precompiled regex patterns
     comment_pattern = re.compile(
         r'/\*[\s\S]*?\*/',
         re.DOTALL
     )
-    matches = []
-    for comment_match in comment_pattern.finditer(file_content):
+
+    # List to store documentation entries
+    docs = []
+
+    # Find all comment blocks
+    for comment_match in comment_pattern.finditer(content):
         comment_block = comment_match.group(0)
         # Start position after the comment block
         start_pos = comment_match.end()
+
         # Extract the function signature
         signature_lines = []
         pos = start_pos
         brace_or_semicolon_found = False
-        while pos < len(file_content):
-            line_end = file_content.find('\n', pos)
+        while pos < len(content):
+            line_end = content.find('\n', pos)
             if line_end == -1:
-                line_end = len(file_content)
-            line = file_content[pos:line_end].strip()
+                line_end = len(content)
+            line = content[pos:line_end].strip()
             pos = line_end + 1
             if not line:
                 continue
-            # Check for the presence of '{' or ';' at the end of the line
-            if '{' in line:
-                # Remove everything starting from '{'
-                line = line.split('{')[0].rstrip()
-                signature_lines.append(line)
-                brace_or_semicolon_found = True
-                break
-            elif ';' in line:
+            # Check for the presence of '{' or ';'
+            if '{' in line or ';' in line:
+                # Remove everything starting from '{' or ';'
+                line = re.split(r'[{\;]', line)[0].rstrip()
                 signature_lines.append(line)
                 brace_or_semicolon_found = True
                 break
@@ -40,8 +42,10 @@ def extract_comments(file_content):
                 signature_lines.append(line)
         if brace_or_semicolon_found:
             signature = ' '.join(signature_lines)
-            matches.append((comment_block, signature.strip()))
-    return matches
+            doc = parse_comment(comment_block)
+            doc['signature'] = signature.strip()
+            docs.append(doc)
+    return docs
 
 def parse_comment(comment_block):
     # Remove the comment delimiters
@@ -172,20 +176,36 @@ def generate_html(docs):
 '''
     return html
 
-def process_files(directory):
-    docs = []
-    for root, _, files in os.walk(directory):
+def process_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as file:
+        try:
+            content = file.read()
+            docs = extract_comments_and_signature(content)
+            return docs
+        except Exception as e:
+            print(f"Error processing {filepath}: {e}")
+            return []
+
+def process_files_in_parallel(file_paths):
+    pool = multiprocessing.Pool()
+    results = pool.map(process_file, file_paths)
+    pool.close()
+    pool.join()
+
+    # Flatten the list of lists
+    all_docs = [doc for sublist in results for doc in sublist]
+    return all_docs
+
+def collect_file_paths(directory):
+    excluded_dirs = {'libs', 'lib'}
+    file_paths = []
+    for root, dirs, files in os.walk(directory):
+        dirs[:] = [d for d in dirs if d not in excluded_dirs]
         for filename in files:
             if filename.endswith(('.c', '.h')):
                 filepath = os.path.join(root, filename)
-                with open(filepath, 'r', encoding='utf-8') as file:
-                    content = file.read()
-                    extracted = extract_comments(content)
-                    for comment_block, signature in extracted:
-                        doc = parse_comment(comment_block)
-                        doc['signature'] = signature
-                        docs.append(doc)
-    return docs
+                file_paths.append(filepath)
+    return file_paths
 
 def main():
     if len(sys.argv) < 2:
@@ -197,11 +217,20 @@ def main():
         print(f'Error: {directory} is not a valid directory.')
         sys.exit(1)
 
-    docs = process_files(directory)
+    print("Collecting file paths...")
+    file_paths = collect_file_paths(directory)
+    if not file_paths:
+        print('No .c or .h files found.')
+        sys.exit(0)
+
+    print(f"Processing {len(file_paths)} files using {multiprocessing.cpu_count()} cores...")
+    docs = process_files_in_parallel(file_paths)
+
     if not docs:
         print('No documentation comments found.')
         sys.exit(0)
 
+    print("Generating HTML documentation...")
     html_content = generate_html(docs)
     with open('documentation.html', 'w', encoding='utf-8') as output_file:
         output_file.write(html_content)
