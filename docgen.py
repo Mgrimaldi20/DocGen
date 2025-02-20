@@ -226,7 +226,7 @@ def collect_file_paths(directory):
 
 def main():
     if len(sys.argv) < 2:
-        print('Usage: python generate_docs.py /path/to/your/c/code')
+        print('Usage: python generate_docs.py /path/to/your/code')
         sys.exit(1)
 
     directory = sys.argv[1]

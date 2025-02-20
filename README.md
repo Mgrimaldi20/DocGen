@@ -4,7 +4,7 @@ Generates HTML documentation for C code based upon a type of comment format abov
 ## Running The Script
 This is a python script that is simple to run, simply use it as follows:
 ```
-python docgen.py /path/to/your/c/code
+python docgen.py /path/to/your/code
 ```
 
 ## The Comment String
