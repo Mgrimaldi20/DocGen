@@ -122,7 +122,7 @@ def parse_comment(comment_block):
 def generate_html(docs):
     # Generate the sidebar index
     sidebar = '''<div class="sidebar">
-    <h2>Navigation</h2>
+    <h1>Navigation</h1>
     <ul>
 '''
 
@@ -138,16 +138,17 @@ def generate_html(docs):
         .content { flex-grow: 1; padding: 20px; overflow-y: auto; }
         .function { margin-bottom: 50px; }
         .signature { font-family: monospace; background-color: #f0f0f0; padding: 10px; border-left: 4px solid #ccc; white-space: pre; }
+        h1 { color: #2c3e50; }
         h2 { color: #2c3e50; }
         h3 { color: #34495e; }
         ul { list-style-type: disc; margin-left: 20px; }
         p { text-align: justify; }
-        .function-name { margin: 0; padding: 0; font-size: 1.2em; }
+        .function-name { margin: 0; padding: 0; }
     </style>
 </head>
 <body>
     <div class="bar2">
-        <h2>Function Documentation</h2>
+        <h1>Function Documentation</h1>
         <ul>
 '''
 
@@ -211,11 +212,12 @@ def process_files_in_parallel(file_paths):
 
 def collect_file_paths(directory):
     excluded_dirs = {'libs', 'lib'}
+    compatible_files = ('.c', '.h')
     file_paths = []
     for root, dirs, files in os.walk(directory):
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
         for filename in files:
-            if filename.endswith(('.c', '.h')):
+            if filename.endswith(compatible_files):
                 filepath = os.path.join(root, filename)
                 file_paths.append(filepath)
     return file_paths
@@ -233,7 +235,7 @@ def main():
     print("Collecting file paths...")
     file_paths = collect_file_paths(directory)
     if not file_paths:
-        print('No .c or .h files found.')
+        print('No compatible files found.')
         sys.exit(0)
 
     print(f"Processing {len(file_paths)} files using {multiprocessing.cpu_count()} cores...")
