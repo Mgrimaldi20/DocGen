@@ -5,7 +5,7 @@ import multiprocessing
 
 excluded_dirs = {'libs', 'lib', 'out', 'bin', 'build', 'install'}
 
-compatible_files = ('.c', '.h', '.cpp', '.cc', '.c++', '.cxx', '.cppm', '.ixx')
+compatible_files = ('.c', '.h', '.hpp', '.hh', '.cpp', '.cc', '.c++', '.cxx', '.cppm', '.ixx')
 
 def extract_comments_and_signature(content):
     # Precompiled regex patterns
