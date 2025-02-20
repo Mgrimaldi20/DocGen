@@ -3,6 +3,10 @@ import re
 import sys
 import multiprocessing
 
+excluded_dirs = {'libs', 'lib', 'out', 'bin', 'build', 'install'}
+
+compatible_files = ('.c', '.h', '.cpp', '.cc', '.c++', '.cxx')
+
 def extract_comments_and_signature(content):
     # Precompiled regex patterns
     comment_pattern = re.compile(
@@ -211,8 +215,6 @@ def process_files_in_parallel(file_paths):
     return all_docs
 
 def collect_file_paths(directory):
-    excluded_dirs = {'libs', 'lib'}
-    compatible_files = ('.c', '.h')
     file_paths = []
     for root, dirs, files in os.walk(directory):
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
